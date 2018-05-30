@@ -27,6 +27,9 @@
 
         .deck {
             font-size: 1.5em;
+            border-bottom: 4px solid white;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
         }
 
         .card {
@@ -127,9 +130,7 @@
     <script>
         var players = [
             new Player("Kyle"),
-            new Player("Elizabeth"),
-            new Player("Dad"),
-            new Player("Megan")
+            new Player("Elizabeth")
         ];
         var turn = 0;
         var rolled = false;
@@ -204,8 +205,6 @@
             t += '</div>';
             t += '</div>';
 
-            t += '<hr>';
-
             var currentPlayerFirstPlayerOrder = getCurrentPlayerFirstPlayerOrder();
             
             for (var i = 0; i < currentPlayerFirstPlayerOrder.length; i++) {
@@ -247,11 +246,25 @@
                 }
                 t += '</div>';
 
-                t += 'Etablisments:';
+                t += 'Establishments:';
                 t += '<div class="cards">';
+                var lastEstablishmentName = '';
+                var counter = 1;
                 for (var j = 0; j < player.establishments.length; j++) {
                     var establishment = player.establishments[j];
-                    t += establishment.draw();
+                    if (lastEstablishmentName == establishment.name) {
+                        counter++;
+                    } else {
+                        if (counter > 1) {
+                            t += 'X' + counter;
+                            counter = 1;
+                        }
+                        t += establishment.draw();
+                    }
+                    lastEstablishmentName = establishment.name;
+                }
+                if (counter > 1) {
+                    t += 'X' + counter;
                 }
                 t += '</div>';
 
@@ -323,7 +336,7 @@
 
             this.hasLandmarkOfName = function (name) {
                 for (var i = 0; i < this.landmarks.length; i++) {
-                    if (this.landmarks[i].name == name) {
+                    if (this.landmarks[i].name == name && this.landmarks[i].constructed) {
                         return true;
                     }
                 }
@@ -345,9 +358,9 @@
                     this.establishments.push(shown_six_or_less_deck.splice(id, 1)[0]);
                     shown_six_or_less_deck = shown_six_or_less_deck.concat(takeRandomCardFromDeck(hidden_six_or_less_deck));
                     this.sortEstablishments();
-                    gameLog.push('<span class="playerName">' + this.name + '</span> bought <span class="cardName">' + establishment.name + '</span>');
+                    gameLog.push('<span class="playerName">' + this.name + '</span> bought the <span class="cardName">' + establishment.name + '</span>');
                 } else {
-                    gameLog.push('<span class="playerName">' + this.name + '</span> does\'t have enough coins to buy <span class="cardName">' + establishment.name + '</span>');
+                    gameLog.push('<span class="playerName">' + this.name + '</span> doesn\'t have enough coins to buy the <span class="cardName">' + establishment.name + '</span>');
                 }
             };
 
