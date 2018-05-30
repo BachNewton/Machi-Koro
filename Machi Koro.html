@@ -10,15 +10,19 @@
             color: white;
         }
 
+        button {
+            font-size: 1em;
+        }
+
         .title {
             text-align: center;
             font-weight: bold;
             font-size: 2em;
+            border-bottom: 4px solid white;
         }
 
         .cards {
             display: flex;
-            flex: 1;
         }
 
         .deck {
@@ -75,15 +79,38 @@
             width: 100%;
         }
 
+        .playerName {
+            color: violet;
+        }
+
+        .cardName {
+            color: cyan;
+        }
+
+        .number {
+            color: orange;
+        }
+
         #currentPlayer {
-            font-weight: bold;
             font-size: 1.5em;
             color: lime;
         }
 
         #selected {
             border-style: dotted;
-            background-color: darkgray;
+            background-color: darkgrey;
+        }
+
+        #game {
+            width: 85%;
+        }
+
+        #gameLog {
+            width: 15%;
+            border-right: 4px solid white;
+            margin-right: 4px;
+            padding-right: 4px;
+            font-size: 1.25em;
         }
     </style>
 </head>
@@ -92,9 +119,11 @@
     <div class='title'>
         Machi Koro
     </div>
-    <hr>
-    <div id='game'></div>
-
+    <div style="display: flex;">
+        <div id='gameLog'></div>
+        <div id='game'></div>
+    </div>
+    
     <script>
         var players = [
             new Player("Kyle"),
@@ -106,19 +135,21 @@
         var rolled = false;
         var lastRoll = -1;
         var selected = -1;
-        var hidden_six_or_less_deck = [
-            new Establishment('Ranch', 'blue', [2], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'cow'),
-            new Establishment('Flower Orchard', 'blue', [4], 2, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'),
-            new Establishment('Forest', 'blue', [5], 3, 'Get 1 coin from the bank, on anyone\'s turn.', 'wood'),
-            new Establishment('Cafe', 'red', [3], 2, 'Get 1 coin from the player who rolled the dice.', 'cup'),
-            new Establishment('General Store', 'green', [2], 0, 'If you have less than 2 constructed landmarks get 2 coins from the bank on your turn only.', 'bread'),
-            new Establishment('Demolition Company', 'green', [4], 2, 'If possible, you must demolish one of your constructed landmarks by turning it back over to its unconstructed side. When you do, get 8 coins from the bank, on your turn only.', 'case'),
-            new Establishment('Flower Shop', 'green', [6], 1, 'Get 1 coin from the bank for each flower orchard you own, on your turn only.', 'bread'),
-            new Establishment('French Restaurant', 'red', [5], 3, 'If the player who rolled this number has 2 or more constructed landmarks, get 5 coins from the player who rolled the dice.', 'cup'),
-            new Establishment('Wheat Field', 'blue', [1], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'),
-            new Establishment('Sushi Bar', 'red', [1], 2, 'If you have a harbor, you get 3 coins from the player who rolled the dice.', 'cup'),
-            new Establishment('Bakery', 'green', [2, 3], 1, 'Get 1 coin from the bank, on your turn only.', 'bread')
-        ];
+        var gameLog = [];
+        var hidden_six_or_less_deck = [];
+        for (var i = 0; i < 5; i++) {
+            hidden_six_or_less_deck.push(new Establishment('Ranch', 'blue', [2], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'cow'));
+            hidden_six_or_less_deck.push(new Establishment('Flower Orchard', 'blue', [4], 2, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'));
+            hidden_six_or_less_deck.push(new Establishment('Forest', 'blue', [5], 3, 'Get 1 coin from the bank, on anyone\'s turn.', 'wood'));
+            hidden_six_or_less_deck.push(new Establishment('Cafe', 'red', [3], 2, 'Get 1 coin from the player who rolled the dice.', 'cup'));
+            hidden_six_or_less_deck.push(new Establishment('General Store', 'green', [2], 0, 'If you have less than 2 constructed landmarks get 2 coins from the bank on your turn only.', 'bread'));
+            // hidden_six_or_less_deck.push(new Establishment('Demolition Company', 'green', [4], 2, 'If possible, you must demolish one of your constructed landmarks by turning it back over to its unconstructed side. When you do, get 8 coins from the bank, on your turn only.', 'case'));
+            hidden_six_or_less_deck.push(new Establishment('Flower Shop', 'green', [6], 1, 'Get 1 coin from the bank for each flower orchard you own, on your turn only.', 'bread'));
+            hidden_six_or_less_deck.push(new Establishment('French Restaurant', 'red', [5], 3, 'If the player who rolled this number has 2 or more constructed landmarks, get 5 coins from the player who rolled the dice.', 'cup'));
+            hidden_six_or_less_deck.push(new Establishment('Wheat Field', 'blue', [1], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'));
+            hidden_six_or_less_deck.push(new Establishment('Sushi Bar', 'red', [1], 2, 'If you have a harbor, you get 3 coins from the player who rolled the dice.', 'cup'));
+            hidden_six_or_less_deck.push(new Establishment('Bakery', 'green', [2, 3], 1, 'Get 1 coin from the bank, on your turn only.', 'bread'));
+        }
         var shown_six_or_less_deck = [];
 
         startGame();
@@ -135,6 +166,8 @@
                 shown_six_or_less_deck = shown_six_or_less_deck.concat(takeRandomCardFromDeck(hidden_six_or_less_deck));
             }
 
+            gameLog.push('It is <span class="playerName">' + currentPlayer().name + '</span>\'s turn');
+            
             draw();
         }
 
@@ -145,6 +178,17 @@
             } else {
                 return [];
             }
+        }
+
+        function drawGameLog() {
+            var t = '';
+            for (var i = gameLog.length - 1; i >= 0; i--) {
+                t += gameLog[i];
+                if (gameLog[i] != '<hr>') {
+                    t += '<br>';
+                }
+            }
+            document.getElementById('gameLog').innerHTML = t;
         }
 
         function draw() {
@@ -162,10 +206,12 @@
 
             t += '<hr>';
 
-            for (var i = 0; i < players.length; i++) {
-                var player = players[i];
+            var currentPlayerFirstPlayerOrder = getCurrentPlayerFirstPlayerOrder();
+            
+            for (var i = 0; i < currentPlayerFirstPlayerOrder.length; i++) {
+                var player = currentPlayerFirstPlayerOrder[i];
 
-                if (i == turn) {
+                if (player == currentPlayer()) {
                     t += '<div id="currentPlayer">';
                     if (rolled) {
                         t += 'Rolled: ' + lastRoll + '<br>';
@@ -214,6 +260,29 @@
             }
 
             document.getElementById('game').innerHTML = t;
+            drawGameLog();
+        }
+
+        function getCopyOfAllPlayersCoins() {
+            var coins = [];
+            for (var i = 0; i < players.length; i++) {
+                coins.push(players[i].coins);
+            }
+            return coins;
+        }
+
+        function logCoinChange(before, after) {
+            for (var i = 0; i < before.length; i++) {
+                var player = players[i];
+                var before_coins = before[i];
+                var after_coins = after[i];
+                
+                if (after_coins > before_coins) {
+                    gameLog.push('<span class="playerName">' + player.name + '</span> gained <span class="number">' + (after_coins - before_coins) + '</span> coins!');
+                } else if (after_coins < before_coins) {
+                    gameLog.push('<span class="playerName">' + player.name + '</span> lost <span class="number">' + (before_coins - after_coins) + '</span> coins!');
+                }
+            }
         }
 
         function Player(name) {
@@ -222,7 +291,7 @@
                 new Establishment('Wheat Field', 'blue', [1], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'),
                 new Establishment('Bakery', 'green', [2, 3], 1, 'Get 1 coin from the bank, on your turn only.', 'bread')
             ];
-            this.coins = 100;
+            this.coins = 0;
             this.landmarks = [
                 new Landmark('Harbor', 2, false, 'If the dice total is 10 or more, you may add 2 to the total, on your turn only.'),
                 new Landmark('Train Station', 4, false, 'You may roll 1 or 2 dice.'),
@@ -232,30 +301,118 @@
                 new Landmark('Airport', 30, false, 'If you build nothing on your turn, you get 10 coins from the bank.'),
             ];
 
+            this.getNumberOfConstructedLandmarks = function () {
+                var count = 0;
+                for (var i = 0; i < this.landmarks.length; i++) {
+                    if (this.landmarks[i].constructed) {
+                        count++;
+                    }
+                }
+                return count;
+            };
+
+            this.getNumberOfEstablishmentsOfName = function (name) {
+                var count = 0;
+                for (var i = 0; i < this.establishments.length; i++) {
+                    if (this.establishments[i].name == name) {
+                        count++;
+                    }
+                }
+                return count;
+            };
+
+            this.hasLandmarkOfName = function (name) {
+                for (var i = 0; i < this.landmarks.length; i++) {
+                    if (this.landmarks[i].name == name) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+
+            this.sortEstablishments = function () {
+                this.establishments.sort(function(a, b) {
+                    return a.getAverageTrigger() - b.getAverageTrigger() || a.name.localeCompare(b.name);
+                });
+            };
+
             this.buyEstablishment = function (id) {
                 var establishment = shown_six_or_less_deck[id];
-                if (establishment.cost <= this.coins) {
+                if (rolled == false) {
+                    gameLog.push('You have to roll before you can buy establishments!');
+                } else if (establishment.cost <= this.coins) {
                     this.coins -= establishment.cost;
                     this.establishments.push(shown_six_or_less_deck.splice(id, 1)[0]);
                     shown_six_or_less_deck = shown_six_or_less_deck.concat(takeRandomCardFromDeck(hidden_six_or_less_deck));
+                    this.sortEstablishments();
+                    gameLog.push('<span class="playerName">' + this.name + '</span> bought <span class="cardName">' + establishment.name + '</span>');
+                } else {
+                    gameLog.push('<span class="playerName">' + this.name + '</span> does\'t have enough coins to buy <span class="cardName">' + establishment.name + '</span>');
                 }
             };
 
             this.checkCardsOfType = function (type) {
                 for (var i = 0; i < this.establishments.length; i++) {
                     var establishment = this.establishments[i];
-                    if (type == establishment.type && establishment.triggers.indexOf(lastRoll) != -1 && ((establishment.type == 'blue') || (establishment.type == 'red') || (establishment.type == 'green' && this == currentPlayer()))) {
+                    if (type == establishment.type && establishment.triggers.indexOf(lastRoll) != -1 && ((establishment.type == 'blue') || (establishment.type == 'red' && this != currentPlayer()) || (establishment.type == 'green' && this == currentPlayer()))) {
                         this.activateCard(establishment);
                     }
                 }
             };
 
             this.activateCard = function (establishment) {
+                gameLog.push('<span class="playerName">' + this.name + '</span>\'s <span class="cardName">' + establishment.name + '</span> was activated!');
+
+                var before_allPlayersCoins = getCopyOfAllPlayersCoins();
+                
                 if (establishment.name == 'Wheat Field') {
                     this.coins += 1;
                 } else if (establishment.name == 'Bakery') {
                     this.coins += 1;
+                } else if (establishment.name == 'Ranch') {
+                    this.coins += 1;
+                } else if (establishment.name == 'Flower Orchard') {
+                    this.coins += 1;
+                } else if (establishment.name == 'Forest') {
+                    this.coins += 1;
+                } else if (establishment.name == 'Cafe') {
+                    if (currentPlayer().coins >= 1) {
+                        currentPlayer().coins -= 1;
+                        this.coins += 1;
+                    }
+                } else if (establishment.name == 'General Store') {
+                    if (this.getNumberOfConstructedLandmarks() < 2) {
+                        this.coins += 2;
+                    }
+                } else if (establishment.name == 'Demolition Company') {
+                    // I still need to do this
+                } else if (establishment.name == 'Flower Shop') {
+                    this.coins += 1 * this.getNumberOfEstablishmentsOfName('Flower Orchard');
+                } else if (establishment.name == 'French Restaurant') {
+                    if (currentPlayer().getNumberOfConstructedLandmarks() >= 2) {
+                        if (currentPlayer().coins >= 5) {
+                            currentPlayer().coins -= 5;
+                            this.coins += 5;
+                        } else {
+                            this.coins += currentPlayer().coins;
+                            currentPlayer().coins = 0;
+                        }
+                    }
+                } else if (establishment.name == 'Sushi Bar') {
+                    if (this.hasLandmarkOfName('Harbor')) {
+                        if (currentPlayer().coins >= 3) {
+                            currentPlayer().coins -= 3;
+                            this.coins += 3;
+                        } else {
+                            this.coins += currentPlayer().coins;
+                            currentPlayer().coins = 0;
+                        }
+                    }
                 }
+
+                var after_allPlayersCoins = getCopyOfAllPlayersCoins();
+
+                logCoinChange(before_allPlayersCoins, after_allPlayersCoins);
             };
         }
 
@@ -273,6 +430,14 @@
             this.cost = cost;
             this.info = info;
             this.category = category;
+
+            this.getAverageTrigger = function () {
+                var sum = 0;
+                for (var i = 0; i < this.triggers.length; i++) {
+                    sum += triggers[i];
+                }
+                return sum / triggers.length;
+            };
 
             this.draw = function (id) {
                 var t = '';
@@ -295,7 +460,8 @@
 
                 t += '>';
 
-                t += this.name;
+                t += '<span style="font-weight: bold";>' + this.name + '</span>';
+
                 if (this.category == 'bread') {
                     t += ' &#x1F35E';
                 } else if (this.category == 'wheat') {
@@ -340,25 +506,29 @@
         function takeTurn() {
             lastRoll = roll();
             rolled = true;
+
+            gameLog.push('<span class="playerName">' + currentPlayer().name + '</span> rolled a <span class="number">' + lastRoll + '</span>');
+
             var cardTypeOrder = ['red', 'blue', 'green', 'purple'];
-            var playerOrder = getPlayerOrder();
+            var reversePlayerOrder = getReversePlayerOrder();
 
             for (var i = 0; i < cardTypeOrder.length; i++) {
                 var type = cardTypeOrder[i];
-                for (var j = 0; j < playerOrder.length; j++) {
-                    var player = playerOrder[j];
+                for (var j = 0; j < reversePlayerOrder.length; j++) {
+                    var player = reversePlayerOrder[j];
                     player.checkCardsOfType(type);
                 }
             }
 
             if (currentPlayer().coins == 0) {
                 currentPlayer().coins += 1;
+                gameLog.push('Because <span class="playerName">' + currentPlayer().name + '</span> has no coins, they earn <span class="number">1</span> coin from the <span class="cardName">City Hall</span>');
             }
 
             draw();
         }
 
-        function getPlayerOrder() {
+        function getReversePlayerOrder() {
             var order = [];
 
             var index = turn;
@@ -375,6 +545,20 @@
             return order;
         }
 
+        function getCurrentPlayerFirstPlayerOrder() {
+            var order = []
+
+            order.push(currentPlayer());
+
+            var i = (turn + 1) % players.length;
+            while (i != turn) {
+                order.push(players[i]);
+                i = (i + 1) % players.length;
+            }
+
+            return order;
+        }
+
         function roll() {
             return Math.floor(Math.random() * 6 + 1);
         }
@@ -382,8 +566,11 @@
         function nextTurn() {
             turn = (turn + 1) % players.length;
             rolled = false;
+
+            gameLog.push('<hr>');
+            gameLog.push('It is <span class="playerName">' + currentPlayer().name + '</span>\'s turn');
+
             draw();
-            document.getElementById('currentPlayer').scrollIntoView();
         }
 
         function currentPlayer() {
