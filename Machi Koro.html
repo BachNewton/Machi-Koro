@@ -153,10 +153,10 @@
             shown: []
         };
 
-        for (var i = 0; i < 5; i++) {
+        for (var i = 0; i < 6; i++) {
             sixOrLessDeck.hidden.push(new Establishment('Ranch', 'blue', [2], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'cow'));
             sixOrLessDeck.hidden.push(new Establishment('Flower Orchard', 'blue', [4], 2, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'));
-            sixOrLessDeck.hidden.push(new Establishment('Forest', 'blue', [5], 3, 'Get 1 coin from the bank, on anyone\'s turn.', 'wood'));
+            sixOrLessDeck.hidden.push(new Establishment('Forest', 'blue', [5], 3, 'Get 1 coin from the bank, on anyone\'s turn.', 'gear'));
             sixOrLessDeck.hidden.push(new Establishment('Cafe', 'red', [3], 2, 'Get 1 coin from the player who rolled the dice.', 'cup'));
             sixOrLessDeck.hidden.push(new Establishment('General Store', 'green', [2], 0, 'If you have less than 2 constructed landmarks get 2 coins from the bank on your turn only.', 'bread'));
             // sixOrLessDeck.hidden.push(new Establishment('Demolition Company', 'green', [4], 2, 'If possible, you must demolish one of your constructed landmarks by turning it back over to its unconstructed side. When you do, get 8 coins from the bank, on your turn only.', 'case'));
@@ -165,6 +165,15 @@
             sixOrLessDeck.hidden.push(new Establishment('Wheat Field', 'blue', [1], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'));
             sixOrLessDeck.hidden.push(new Establishment('Sushi Bar', 'red', [1], 2, 'If you have a harbor, you get 3 coins from the player who rolled the dice.', 'cup'));
             sixOrLessDeck.hidden.push(new Establishment('Bakery', 'green', [2, 3], 1, 'Get 1 coin from the bank, on your turn only.', 'bread'));
+
+            sevenOrMoreDeck.hidden.push(new Establishment('Tuna Boat', 'blue', [12, 13, 14], 5, 'On anyone\'s turn: The current player rolls 2 dice. If you have a harbor you get as many coins as the dice total.', 'boat'));
+            sevenOrMoreDeck.hidden.push(new Establishment('Soda Bottling Plant', 'green', [11], 5, 'Get 1 coin from the bank for every &#x2615 owned by all players, on your turn only.', 'factory')); // Cup
+            sevenOrMoreDeck.hidden.push(new Establishment('Cheese Factory', 'green', [7], 5, 'Get 3 coins from the bank for each &#x1F404 establishment that you own, on your turn only.', 'factory')); // Cow
+            sevenOrMoreDeck.hidden.push(new Establishment('Furniture Factory', 'green', [8], 3, 'Get 3 coins from the bank for each &#x2699 establishment that you own, on your turn only.', 'factory')); // Gear
+            sevenOrMoreDeck.hidden.push(new Establishment('Pizza Joint', 'red', [7], 1, 'Get 1 coin from the player who rolled the dice.', 'cup'));
+            sevenOrMoreDeck.hidden.push(new Establishment('Member\'s Only Club', 'red', [12, 13, 14], 4, 'If the player who rolled this number has 3 or more constructed landmarks, get all of their coins.', 'cup'));
+            // Skipped moving company
+            sevenOrMoreDeck.hidden.push(new Establishment('Mackerel Boat', 'blue', [8], 2, 'If you have a harbor, get 3 coins from the bank on anyone\'s turn.', 'boat'));
         }
 
         startGame();
@@ -179,6 +188,10 @@
 
             while (sixOrLessDeck.shown.length < 5) {
                 sixOrLessDeck.shown = sixOrLessDeck.shown.concat(takeRandomCardFromDeck(sixOrLessDeck.hidden));
+            }
+
+            while (sevenOrMoreDeck.shown.length < 5) {
+                sevenOrMoreDeck.shown = sevenOrMoreDeck.shown.concat(takeRandomCardFromDeck(sevenOrMoreDeck.hidden));
             }
 
             gameLog.push('It is ' + currentPlayer().draw() + '\'s turn');
@@ -216,6 +229,13 @@
             for (var i = 0; i < sixOrLessDeck.shown.length; i++) {
                 var establishment = sixOrLessDeck.shown[i];
                 t += establishment.draw(i);
+            }
+            t += '</div>';
+            t += '&#x2265 7:';
+            t += '<div class="cards">';
+            for (var i = 0; i < sevenOrMoreDeck.shown.length; i++) {
+                var establishment = sevenOrMoreDeck.shown[i];
+                t += establishment.draw(i + sixOrLessDeck.shown.length);
             }
             t += '</div>';
             t += '</div>';
@@ -323,7 +343,7 @@
                 new Establishment('Wheat Field', 'blue', [1], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'),
                 new Establishment('Bakery', 'green', [2, 3], 1, 'Get 1 coin from the bank, on your turn only.', 'bread')
             ];
-            this.coins = 0;
+            this.coins = 1000;
             this.landmarks = [
                 new Landmark('Harbor', 2, false, 'If the dice total is 10 or more, you may add 2 to the total, on your turn only.'),
                 new Landmark('Train Station', 4, false, 'You may roll 1 or 2 dice.'),
@@ -570,10 +590,14 @@
                     t += ' &#x1F404';
                 } else if (this.category == 'cup') {
                     t += ' &#x2615';
-                } else if (this.category == 'wood') {
+                } else if (this.category == 'gear') {
                     t += ' &#x2699';
                 } else if (this.category == 'case') {
                     t += ' &#x1F4BC';
+                } else if (this.category == 'boat') {
+                    t += ' &#x26F5';
+                } else if (this.category == 'factory') {
+                    t += ' &#x1F3ED';
                 }
                 t += '<br>';
                 t += 'Trigger: ';
