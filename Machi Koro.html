@@ -159,7 +159,7 @@
             sixOrLessDeck.hidden.push(new Establishment('Forest', 'blue', [5], 3, 'Get 1 coin from the bank, on anyone\'s turn.', 'gear'));
             sixOrLessDeck.hidden.push(new Establishment('Cafe', 'red', [3], 2, 'Get 1 coin from the player who rolled the dice.', 'cup'));
             sixOrLessDeck.hidden.push(new Establishment('General Store', 'green', [2], 0, 'If you have less than 2 constructed landmarks get 2 coins from the bank on your turn only.', 'bread'));
-            // sixOrLessDeck.hidden.push(new Establishment('Demolition Company', 'green', [4], 2, 'If possible, you must demolish one of your constructed landmarks by turning it back over to its unconstructed side. When you do, get 8 coins from the bank, on your turn only.', 'case'));
+            sixOrLessDeck.hidden.push(new Establishment('Demolition Company', 'green', [4], 2, 'If possible, you must demolish one of your constructed landmarks by turning it back over to its unconstructed side. When you do, get 8 coins from the bank, on your turn only.', 'case'));
             sixOrLessDeck.hidden.push(new Establishment('Flower Shop', 'green', [6], 1, 'Get 1 coin from the bank for each flower orchard you own, on your turn only.', 'bread'));
             sixOrLessDeck.hidden.push(new Establishment('French Restaurant', 'red', [5], 3, 'If the player who rolled this number has 2 or more constructed landmarks, get 5 coins from the player who rolled the dice.', 'cup'));
             sixOrLessDeck.hidden.push(new Establishment('Wheat Field', 'blue', [1], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'));
@@ -172,8 +172,11 @@
             sevenOrMoreDeck.hidden.push(new Establishment('Furniture Factory', 'green', [8], 3, 'Get 3 coins from the bank for each &#x2699 establishment that you own, on your turn only.', 'factory')); // Gear
             sevenOrMoreDeck.hidden.push(new Establishment('Pizza Joint', 'red', [7], 1, 'Get 1 coin from the player who rolled the dice.', 'cup'));
             sevenOrMoreDeck.hidden.push(new Establishment('Member\'s Only Club', 'red', [12, 13, 14], 4, 'If the player who rolled this number has 3 or more constructed landmarks, get all of their coins.', 'cup'));
-            // Skipped moving company
+            sevenOrMoreDeck.hidden.push(new Establishment('Moving Company', 'green', [9, 10], 2, 'You must give a non-&#x1F3E2 building that you own to another player. When you do, get 4 coins from the bank, on your turn only', 'case')); // Office
             sevenOrMoreDeck.hidden.push(new Establishment('Mackerel Boat', 'blue', [8], 2, 'If you have a harbor, get 3 coins from the bank on anyone\'s turn.', 'boat'));
+            sevenOrMoreDeck.hidden.push(new Establishment('Apple Orchard', 'blue', [10], 3, 'Get 3 coins from the bank, on anyone\'s turn.', 'wheat'));
+            sevenOrMoreDeck.hidden.push(new Establishment('Fruit and Vegetable Market', 'green', [11, 12], 2, 'Get 2 coins from the bank for each &#x1F33E establishment you own, on your turn only.', 'apple')); // Wheat
+            sevenOrMoreDeck.hidden.push(new Establishment('Family Restaurant', 'red', [9, 10], 3, 'Get 3 coins from the player who rolled the dice.', 'cup'));
         }
 
         startGame();
@@ -343,7 +346,7 @@
                 new Establishment('Wheat Field', 'blue', [1], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'),
                 new Establishment('Bakery', 'green', [2, 3], 1, 'Get 1 coin from the bank, on your turn only.', 'bread')
             ];
-            this.coins = 1000;
+            this.coins = 0;
             this.landmarks = [
                 new Landmark('Harbor', 2, false, 'If the dice total is 10 or more, you may add 2 to the total, on your turn only.'),
                 new Landmark('Train Station', 4, false, 'You may roll 1 or 2 dice.'),
@@ -377,6 +380,16 @@
                 return count;
             };
 
+            this.getNumberOfEstablishmentsOfCategory = function (category) {
+                var count = 0;
+                for (var i = 0; i < this.establishments.length; i++) {
+                    if (this.establishments[i].category == category) {
+                        count++;
+                    }
+                }
+                return count;
+            };
+
             this.hasLandmarkOfName = function (name) {
                 for (var i = 0; i < this.landmarks.length; i++) {
                     if (this.landmarks[i].name == name && this.landmarks[i].constructed) {
@@ -384,6 +397,10 @@
                     }
                 }
                 return false;
+            };
+
+            this.hasAllLandmarks = function () {
+                return this.getNumberOfConstructedLandmarks() == this.landmarks.length;
             };
 
             this.sortEstablishments = function () {
@@ -419,6 +436,10 @@
                     landmark.constructed = true;
                     builtThisTurn = true;
                     gameLog.push('' + this.draw() + ' constructed the <span class="cardName">' + landmark.name + '</span>');
+
+                    if (this.hasAllLandmarks()) {
+                        winner(this);
+                    }
                 } else {
                     gameLog.push('' + this.draw() + ' doesn\'t have enough coins to construct the <span class="cardName">' + landmark.name + '</span>!');
                 }
@@ -460,7 +481,11 @@
                         conditionsMet = false;
                     }
                 } else if (establishment.name == 'Demolition Company') {
-                    // I still need to do this
+                    if (this.getNumberOfConstructedLandmarks() >= 1) {
+                        demolitionCard(this);
+                    } else {
+                        conditionsMet = false;
+                    }
                 } else if (establishment.name == 'Flower Shop') {
                     this.coins += 1 * this.getNumberOfEstablishmentsOfName('Flower Orchard');
                 } else if (establishment.name == 'French Restaurant') {
@@ -487,6 +512,56 @@
                     } else {
                         conditionsMet = false;
                     }
+                } else if (establishment.name == 'Tuna Boat') {
+                    if (this.hasLandmarkOfName('Harbor')) {
+                        this.coins += roll() + roll();
+                    } else {
+                        conditionsMet = false;
+                    }
+                } else if (establishment.name == 'Soda Bottling Plant') {
+                    for (var i = 0; i < players.length; i++) {
+                        this.coins += 1 * players[i].getNumberOfEstablishmentsOfCategory('cup');
+                    }
+                } else if (establishment.name == 'Cheese Factory') {
+                    this.coins += 3 * this.getNumberOfEstablishmentsOfCategory('cow');
+                } else if (establishment.name == 'Furniture Factory') {
+                    this.coins += 3 * this.getNumberOfEstablishmentsOfCategory('gear');
+                } else if (establishment.name == 'Pizza Joint') {
+                    if (currentPlayer().coins >= 1) {
+                        currentPlayer().coins -= 1;
+                        this.coins += 1;
+                    }
+                } else if (establishment.name == 'Member\'s Only Club') {
+                    if (currentPlayer().getNumberOfConstructedLandmarks() >= 3) {
+                        this.coins += currentPlayer().coins;
+                        currentPlayer().coins = 0;
+                    } else {
+                        conditionsMet = false;
+                    }
+                } else if (establishment.name == 'Mackerel Boat') {
+                    if (this.hasLandmarkOfName('Harbor')) {
+                        this.coins += 3;
+                    } else {
+                        conditionsMet = false;
+                    }
+                } else if (establishment.name == 'Apple Orchard') {
+                    this.coins += 3;
+                } else if (establishment.name == 'Fruit and Vegetable Market') {
+                    this.coins += 2 * this.getNumberOfEstablishmentsOfCategory('wheat');
+                } else if (establishment.name == 'Family Restaurant') {
+                    if (currentPlayer().coins >= 3) {
+                        currentPlayer().coins -= 3;
+                        this.coins += 3;
+                    } else {
+                        this.coins += currentPlayer().coins;
+                        currentPlayer().coins = 0;
+                    }
+                } else if (establishment.name == 'Moving Company') {
+                    if (this.establishments.length >= 1) {
+                        movingCompanyCard(this);
+                    } else {
+                        conditionsMet = false;
+                    }
                 }
 
                 if (conditionsMet) {
@@ -504,6 +579,103 @@
 
                 logCoinChange(before_allPlayersCoins, after_allPlayersCoins);
             };
+        }
+
+        function winner(player) {
+            alert('WE HAVE A WINNER!\n\nBecause ' + player.name + ' constructed all the landmarks, the won they game!\n\nCONGRATULATION: ' + player.name + '!!');
+        }
+
+        function demolitionCard(player) {
+            var promptText = player.name + ' rolled a 4!\n\nYou must demolish a landmark!\nType the number corresponding to the landmark you wish to destroy:\n\n';
+
+            var choices = []
+            for (var i = 0; i < player.landmarks.length; i++) {
+                if (player.landmarks[i].constructed) {
+                    promptText += (i + 1) + ': ' + player.landmarks[i].name + '\n';
+                    choices.push(i);
+                }
+            }
+
+            var choice = '';
+            while (isNaN(choice) || choices.indexOf(parseInt(choice) - 1) == -1) {
+                choice = prompt(promptText);
+
+                if (isNaN(choice)) {
+                    alert(choice + ' is not a number! You must enter a number!');
+                } else if (choices.indexOf(parseInt(choice) - 1) == -1) {
+                    alert(choice + ' is not a one of the valid options! You must pick one of the options shown!');
+                }
+            }
+            choice = parseInt(choice) - 1;
+
+            player.landmarks[choice].constructed = false;
+
+            player.coins += 8;
+        }
+
+        function movingCompanyCard(player) {
+            var establishment = pickEstablishment(player);
+            var sellToPlayer = pickPlayer(player, establishment);
+
+            var establishmentIndex = player.establishments.indexOf(establishment);
+            player.establishments.splice(establishmentIndex, 1);
+
+            sellToPlayer.establishments.push(establishment);
+            sellToPlayer.sortEstablishments();
+
+            player.coins += 4;
+        }
+
+        function pickEstablishment(player) {
+            var promptText = player.name + ' rolled a 9 or 10!\n\nYou must sell an establishment to another player!\nType the number corresponding to the establishment you wish to sell:\n\n';
+
+            var choices = []
+            for (var i = 0; i < player.establishments.length; i++) {
+                if (player.establishments[i].type != 'purple') {
+                    promptText += (i + 1) + ': ' + player.establishments[i].name + '\n';
+                    choices.push(i);
+                }
+            }
+
+            var choice = '';
+            while (isNaN(choice) || choices.indexOf(parseInt(choice) - 1) == -1) {
+                choice = prompt(promptText);
+
+                if (isNaN(choice)) {
+                    alert(choice + ' is not a number! You must enter a number!');
+                } else if (choices.indexOf(parseInt(choice) - 1) == -1) {
+                    alert(choice + ' is not a one of the valid options! You must pick one of the options shown!');
+                }
+            }
+            choice = parseInt(choice) - 1;
+
+            return player.establishments[choice];
+        }
+
+        function pickPlayer(player, establishment) {
+            var promptText = 'To whom should the ' + establishment.name + ' be sold to?\n\nType the number corresponding to the player you wish to sell to:\n\n';
+
+            var choices = []
+            for (var i = 0; i < players.length; i++) {
+                if (players[i] != player) {
+                    promptText += (i + 1) + ': ' + players[i].name + '\n';
+                    choices.push(i);
+                }
+            }
+
+            var choice = '';
+            while (isNaN(choice) || choices.indexOf(parseInt(choice) - 1) == -1) {
+                choice = prompt(promptText);
+
+                if (isNaN(choice)) {
+                    alert(choice + ' is not a number! You must enter a number!');
+                } else if (choices.indexOf(parseInt(choice) - 1) == -1) {
+                    alert(choice + ' is not a one of the valid options! You must pick one of the options shown!');
+                }
+            }
+            choice = parseInt(choice) - 1;
+
+            return players[choice];
         }
 
         function Landmark(name, cost, constructed, info) {
@@ -598,6 +770,8 @@
                     t += ' &#x26F5';
                 } else if (this.category == 'factory') {
                     t += ' &#x1F3ED';
+                } else if (this.category == 'apple') {
+                    t += ' &#x1F34E';
                 }
                 t += '<br>';
                 t += 'Trigger: ';
