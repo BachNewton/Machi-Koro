@@ -128,10 +128,7 @@
     </div>
 
     <script>
-        var players = [
-            new Player("Elizabeth"),
-            new Player("Kyle")
-        ];
+        var players = [];
         var turn = 0;
         var rolled = false;
         var extraTurn = false;
@@ -182,12 +179,12 @@
         startGame();
 
         function startGame() {
-            // var numOfPlayers = prompt("How many players will be playing?");
+            var numOfPlayers = prompt("How many players will be playing?");
 
-            // for (var i = 0; i < numOfPlayers; i++) {
-            //     var playerName = prompt("What is the name of player #" + (i + 1));
-            //     players.push(new Player(playerName));
-            // }
+            for (var i = 0; i < numOfPlayers; i++) {
+                var playerName = prompt("What is the name of player #" + (i + 1) + '?');
+                players.push(new Player(playerName));
+            }
 
             while (sixOrLessDeck.shown.length < 5) {
                 sixOrLessDeck.shown = sixOrLessDeck.shown.concat(takeRandomCardFromDeck(sixOrLessDeck.hidden));
@@ -456,6 +453,8 @@
 
             this.activateCard = function (establishment) {
                 var conditionsMet = true;
+                var demolitionCardActivated = false;
+                var movingCompanyCardActivated = false;
 
                 var before_allPlayersCoins = getCopyOfAllPlayersCoins();
 
@@ -482,7 +481,7 @@
                     }
                 } else if (establishment.name == 'Demolition Company') {
                     if (this.getNumberOfConstructedLandmarks() >= 1) {
-                        demolitionCard(this);
+                        demolitionCardActivated = true;
                     } else {
                         conditionsMet = false;
                     }
@@ -558,7 +557,7 @@
                     }
                 } else if (establishment.name == 'Moving Company') {
                     if (this.establishments.length >= 1) {
-                        movingCompanyCard(this);
+                        movingCompanyCardActivated = true;
                     } else {
                         conditionsMet = false;
                     }
@@ -567,8 +566,14 @@
                 if (conditionsMet) {
                     gameLog.push('' + this.draw() + '\'s <span class="cardName">' + establishment.name + '</span> was activated!');
 
-                    if ((establishment.category == 'cup' || establishment.category == 'bread') && currentPlayer().hasLandmarkOfName('Shopping Mall')) {
-                        gameLog.push('Because of the <span class="cardName">Shopping Mall</span>, <span class="cardName">' + establishment.name + '</span> gained <span class="number">1</span> extra coin!');
+                    if (demolitionCardActivated) {
+                        demolitionCard(this);
+                    } else if (movingCompanyCardActivated) {
+                        movingCompanyCard(this);
+                    }
+
+                    if ((establishment.category == 'cup' || establishment.category == 'bread') && this.hasLandmarkOfName('Shopping Mall')) {
+                        gameLog.push('Because of the <span class="cardName">Shopping Mall</span>, the <span class="cardName">' + establishment.name + '</span> gained <span class="number">1</span> extra coin!');
                         this.coins += 1;
                     }
                 } else {
@@ -582,7 +587,7 @@
         }
 
         function winner(player) {
-            alert('WE HAVE A WINNER!\n\nBecause ' + player.name + ' constructed all the landmarks, the won they game!\n\nCONGRATULATION: ' + player.name + '!!');
+            alert('WE HAVE A WINNER!\n\nBecause ' + player.name + ' constructed all the landmarks, they won the game!\n\nCONGRATULATION: ' + player.name + '!!');
         }
 
         function demolitionCard(player) {
@@ -611,6 +616,8 @@
             player.landmarks[choice].constructed = false;
 
             player.coins += 8;
+
+            gameLog.push(player.draw() + ' demolished their <span class="cardName">' + player.landmarks[choice].name + '</span>!');
         }
 
         function movingCompanyCard(player) {
@@ -624,6 +631,8 @@
             sellToPlayer.sortEstablishments();
 
             player.coins += 4;
+
+            gameLog.push(player.draw() + ' sold their <span class="cardName">' + establishment.name + '</span> to ' + sellToPlayer.draw() + '!');
         }
 
         function pickEstablishment(player) {
