@@ -179,7 +179,11 @@
 
             for (var i = 0; i < numOfPlayers; i++) {
                 var playerName = prompt("What is the name of player #" + (i + 1) + '?');
-                players.push(new Player(playerName));
+                if (playerName.indexOf('AI - ') == -1) {
+                    players.push(new Player(playerName, false));
+                } else {
+                    players.push(new Player(playerName, true));
+                }
             }
 
             while (sixOrLessDeck.shown.length < 5) {
@@ -193,6 +197,10 @@
             gameLog.push('It is ' + currentPlayer().draw() + '\'s turn');
 
             draw();
+
+            if (currentPlayer().AI) {
+                rollWithDice(1);
+            }
         }
 
         function takeRandomCardFromDeck(deck) {
@@ -332,8 +340,9 @@
             }
         }
 
-        function Player(name) {
+        function Player(name, AI) {
             this.name = name;
+            this.AI = AI;
             this.color = 'rgb(' + Math.floor(Math.random() * 256) + ',' + Math.floor(Math.random() * 256) + ',' + Math.floor(Math.random() * 256) + ')';
             this.establishments = [
                 new Establishment('Wheat Field', 'blue', [1], 1, 'Get 1 coin from the bank, on anyone\'s turn.', 'wheat'),
@@ -603,6 +612,11 @@
             }
 
             var choice = '';
+
+            if (player.AI) {
+                choice = String(choices[0] + 1);
+            }
+
             while (isNaN(choice) || choices.indexOf(parseInt(choice) - 1) == -1) {
                 choice = prompt(promptText);
 
@@ -648,6 +662,11 @@
             }
 
             var choice = '';
+
+            if (player.AI) {
+                choice = String(choices[Math.floor(Math.random() * choices.length)] + 1);
+            }
+
             while (isNaN(choice) || choices.indexOf(parseInt(choice) - 1) == -1) {
                 choice = prompt(promptText);
 
@@ -674,6 +693,11 @@
             }
 
             var choice = '';
+
+            if (player.AI) {
+                choice = String(choices[Math.floor(Math.random() * choices.length)] + 1);
+            }
+
             while (isNaN(choice) || choices.indexOf(parseInt(choice) - 1) == -1) {
                 choice = prompt(promptText);
 
@@ -857,6 +881,53 @@
             gameLog.push('Summary of coin change:');
 
             draw();
+
+            if (currentPlayer().AI) {
+                buyBestStuff();
+                nextTurn();
+            }
+        }
+
+        function buyBestStuff() {
+            var establishmentsInBestOrder = sixOrLessDeck.shown.concat(sevenOrMoreDeck.shown);
+
+            establishmentsInBestOrder.sort(function (a, b) {
+                return a.cost - b.cost || a.type.localeCompare(b.type);
+            });
+
+            while (establishmentsInBestOrder.length > 0 && establishmentsInBestOrder[0].cost <= currentPlayer().coins) {
+                var establishment = establishmentsInBestOrder[0];
+
+                var index = sixOrLessDeck.shown.indexOf(establishment);
+
+                if (index == -1) {
+                    buyBestLandmarks();
+                }
+
+                if (establishmentsInBestOrder[0].cost <= currentPlayer().coins) {
+                    if (index != -1) {
+                        currentPlayer().buyEstablishment(sixOrLessDeck, index);
+                    } else {
+                        index = sevenOrMoreDeck.shown.indexOf(establishment);
+                        currentPlayer().buyEstablishment(sevenOrMoreDeck, index);
+                    }
+                }
+
+                establishmentsInBestOrder = sixOrLessDeck.shown.concat(sevenOrMoreDeck.shown);
+                establishmentsInBestOrder.sort(function (a, b) {
+                    return a.cost - b.cost || a.type.localeCompare(b.type);
+                });
+            }
+
+            buyBestLandmarks();
+        }
+
+        function buyBestLandmarks() {
+            for (var i = 0; i < currentPlayer().landmarks.length; i++) {
+                if (currentPlayer().landmarks[i].constructed == false && currentPlayer().landmarks[i].cost <= currentPlayer().coins) {
+                    currentPlayer().constructLandmark(i);
+                }
+            }
         }
 
         function rollWithDice(dice) {
@@ -866,7 +937,15 @@
                 takeTurn(diceChoices[0]);
             } else {
                 draw();
+
+                if (currentPlayer().AI) {
+                    pickBestDiceChoice();
+                }
             }
+        }
+
+        function pickBestDiceChoice() {
+            takeTurn(diceChoices[Math.floor(Math.random() * diceChoices.length)]);
         }
 
         function updateDiceChoices(dice) {
@@ -1001,6 +1080,16 @@
             }
 
             draw();
+
+            if (currentPlayer().AI) {
+                if (currentPlayer().hasLandmarkOfName('Moon Tower')) {
+                    rollWithDice(3);
+                } else if (currentPlayer().hasLandmarkOfName('Train Station')) {
+                    rollWithDice(2);
+                } else {
+                    rollWithDice(1);
+                }
+            }
         }
 
         function currentPlayer() {
