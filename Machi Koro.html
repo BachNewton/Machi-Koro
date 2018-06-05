@@ -82,10 +82,6 @@
             width: 100%;
         }
 
-        .playerName {
-            color: violet;
-        }
-
         .cardName {
             color: cyan;
         }
@@ -435,7 +431,7 @@
                     gameLog.push('' + this.draw() + ' constructed the <span class="cardName">' + landmark.name + '</span>');
 
                     if (this.hasAllLandmarks()) {
-                        winner(this);
+                        winner();
                     }
                 } else {
                     gameLog.push('' + this.draw() + ' doesn\'t have enough coins to construct the <span class="cardName">' + landmark.name + '</span>!');
@@ -573,11 +569,11 @@
                     }
 
                     if ((establishment.category == 'cup' || establishment.category == 'bread') && this.hasLandmarkOfName('Shopping Mall')) {
-                        gameLog.push('Because of the <span class="cardName">Shopping Mall</span>, the <span class="cardName">' + establishment.name + '</span> gained <span class="number">1</span> extra coin!');
+                        gameLog.push('Because of ' + this.draw() + '\'s <span class="cardName">Shopping Mall</span>, the <span class="cardName">' + establishment.name + '</span> gained <span class="number">1</span> extra coin!');
                         this.coins += 1;
                     }
                 } else {
-                    gameLog.push('The condtions for the <span class="cardName">' + establishment.name + '</span> were not met for it to activate');
+                    gameLog.push('The condtions for ' + this.draw() + '\'s <span class="cardName">' + establishment.name + '</span> were not met for it to activate');
                 }
 
                 var after_allPlayersCoins = getCopyOfAllPlayersCoins();
@@ -586,8 +582,13 @@
             };
         }
 
-        function winner(player) {
-            alert('WE HAVE A WINNER!\n\nBecause ' + player.name + ' constructed all the landmarks, they won the game!\n\nCONGRATULATION: ' + player.name + '!!');
+        function winner() {
+            alert('WE HAVE A WINNER!\n\nBecause ' + currentPlayer().name + ' constructed all the landmarks, they won the game!\n\nCONGRATULATION: ' + currentPlayer().name + '!!');
+
+            if (players.length > 1) {
+                players.splice(turn, 1);
+                turn = turn % players.length;
+            }
         }
 
         function demolitionCard(player) {
