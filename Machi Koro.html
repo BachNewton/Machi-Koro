@@ -362,6 +362,18 @@
                 return '<span style="color:' + this.color + ';">' + this.name + '</span>';
             }
 
+            this.getAverageTrigger = function () {
+                var sum = 0;
+                var count = 0;
+                for (var i = 0; i < this.establishments.length; i++) {
+                    for (var j = 0; j < this.establishments[i].triggers.length; j++) {
+                        sum += this.establishments[i].triggers[j];
+                        count++;
+                    }
+                }
+                return sum / count;
+            }
+
             this.getNumberOfConstructedLandmarks = function () {
                 var count = 0;
                 for (var i = 0; i < this.landmarks.length; i++) {
@@ -596,7 +608,11 @@
 
             if (players.length > 1) {
                 players.splice(turn, 1);
-                turn = turn % players.length;
+                turn -= 1;
+                if (turn < 0) {
+                    turn = players.length - 1;
+                }
+                nextTurn();
             }
         }
 
@@ -664,7 +680,7 @@
             var choice = '';
 
             if (player.AI) {
-                choice = String(choices[Math.floor(Math.random() * choices.length)] + 1);
+                choice = String(choices[0] + 1);
             }
 
             while (isNaN(choice) || choices.indexOf(parseInt(choice) - 1) == -1) {
@@ -900,6 +916,8 @@
 
                 var index = sixOrLessDeck.shown.indexOf(establishment);
 
+                // Six or less, then landmarks, then seven or more
+
                 if (index == -1) {
                     buyBestLandmarks();
                 }
@@ -923,6 +941,17 @@
         }
 
         function buyBestLandmarks() {
+            // Buy Moon Tower first
+            if (currentPlayer().landmarks[4].constructed == false && currentPlayer().landmarks[4].cost <= currentPlayer().coins) {
+                currentPlayer().constructLandmark(4);
+            }
+
+            // Buy Amusement Park second
+            if (currentPlayer().landmarks[3].constructed == false && currentPlayer().landmarks[3].cost <= currentPlayer().coins) {
+                currentPlayer().constructLandmark(3);
+            }
+
+            // Buy remaining
             for (var i = 0; i < currentPlayer().landmarks.length; i++) {
                 if (currentPlayer().landmarks[i].constructed == false && currentPlayer().landmarks[i].cost <= currentPlayer().coins) {
                     currentPlayer().constructLandmark(i);
@@ -945,7 +974,19 @@
         }
 
         function pickBestDiceChoice() {
-            takeTurn(diceChoices[Math.floor(Math.random() * diceChoices.length)]);
+            var doubleChoices = [];
+
+            for (var i = 0; i < diceChoices.length; i++) {
+                if (String(diceChoices[i]).indexOf('DOUBLES') != -1) {
+                    doubleChoices.push(diceChoices[i]);
+                }
+            }
+
+            if (doubleChoices.length > 0) {
+                takeTurn(doubleChoices[Math.floor(Math.random() * doubleChoices.length)]);
+            } else {
+                takeTurn(diceChoices[Math.floor(Math.random() * diceChoices.length)]);
+            }
         }
 
         function updateDiceChoices(dice) {
@@ -1082,10 +1123,15 @@
             draw();
 
             if (currentPlayer().AI) {
-                if (currentPlayer().hasLandmarkOfName('Moon Tower')) {
-                    rollWithDice(3);
-                } else if (currentPlayer().hasLandmarkOfName('Train Station')) {
-                    rollWithDice(2);
+                // 4.5 is the gussed sweet spot for moving to multi dice rolls
+                if (currentPlayer().getAverageTrigger() >= 4.5) {
+                    if (currentPlayer().hasLandmarkOfName('Moon Tower')) {
+                        rollWithDice(3);
+                    } else if (currentPlayer().hasLandmarkOfName('Train Station')) {
+                        rollWithDice(2);
+                    } else {
+                        rollWithDice(1);
+                    }
                 } else {
                     rollWithDice(1);
                 }
